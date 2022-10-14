@@ -17,6 +17,7 @@
 // @require      https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.16.4/dist/tagify.polyfills.min.js
 // @resource     tagifycss https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.16.4/dist/tagify.css
 // @run-at       document-end
+// @license      MIT
 // ==/UserScript==
 
 
