@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AnimeGoHelper[Mikan快速订阅]
 // @namespace    https://github.com/deqxj00/AnimeGoHelper
-// @version      0.42
+// @version      0.45
 // @description  AnimeGo的WebAPI调用插件,能快速添加下载项目,配置筛选规则。！！没有适配mikan的高级订阅模式，请关闭后使用。！！
 // @author       DeQxJ00
 // @match        https://mikanani.me/*
@@ -12,7 +12,9 @@
 // @grant        GM_addStyle
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_deleteValue
 // @grant        GM_notification
+// @require      https://cdn.jsdelivr.net/npm/js-base64@3.7.2/base64.min.js
 // @require      https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.16.4/dist/tagify.min.js
 // @require      https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.16.4/dist/tagify.polyfills.min.js
 // @resource     tagifycss https://cdn.jsdelivr.net/npm/@yaireo/tagify@4.16.4/dist/tagify.css
@@ -157,7 +159,7 @@ background-color:#fff;
 box-shadow: #666 0px 0px 10px;
 }
 
-#inputurlbox,#inputurlbox2{
+#inputurlbox,#inputurlbox2,#inputurlbox3{
 width: 200px;
 border-radius: 25px;
 padding-right: 7px;
@@ -165,12 +167,19 @@ margin-top: 5px;
 margin-bottom: 5px;
 }
 
-#inputurlspan,#configbtnjson,#configbtntest{
+.btn-setting{
 color:#fff;
 float:right;
-margin-right:5px;
-margin-left:5px;
+margin:5px;
+background-color:#61ccd1;
 }
+.btn-setting2{
+color:#fff;
+float:right;
+margin:5px;
+background-color:#00b8ee;
+}
+
 
 /* input tag whitelist blacklist */
 .tags-look .tagify__dropdown__item{
@@ -268,11 +277,11 @@ margin-left:5px;
             myFiliters = JSON.parse(tmp, reviver);
         }else{
             //sample
-            let defaultlist = new ListFiliterInner();
-            defaultlist.is_enable_blacklist = true;
-            defaultlist.blacklist.push("720p","1080x720");
-            myFiliters.Filiter0.set("0",defaultlist);
-            GM_setValue('myFiliters',JSON.stringify(myFiliters,replacer));
+            //let defaultlist = new ListFiliterInner();
+            //defaultlist.is_enable_blacklist = true;
+            //defaultlist.blacklist.push("720p","1080x720");
+            //myFiliters.Filiter0.set("0",defaultlist);
+            //GM_setValue('myFiliters',JSON.stringify(myFiliters,replacer));
         }
         //newValue = JSON.parse(str, reviver);
     }
@@ -306,7 +315,51 @@ margin-left:5px;
         }
     }
     //api地址输入框设定
-    document.body.insertAdjacentHTML('afterend', '<div id="inputurldiv" style="display:none"><div id="inputurldiv_inner"><div class="popover-header popover-title"><span style="color:#3bc0c3">AnimeGo设置</span><button type="button" class="close" onclick="closeSetting()" data-dismiss="popover-x" aria-hidden="true"><i class="fa fa-times" aria-hidden="true"></i></button></div><div class="popover-body popover-content"><span>请修改api地址:</span><input id="inputurlbox" type="text" class="form-control input-sm"  placeholder="'+samplepath+'" ><br><span>access_key:</span><input id="inputurlbox2" type="password" class="form-control input-sm"></div><div class="popover-footer"><div style="margin-right: 12px;height:30px"><button type="button" id="inputurlspan" class="btn btn-sm btn-submit" style="background-color:#61ccd1" onclick="window.confirmurl()">确定</button><button type="button" id="configbtnjson" class="btn btn-sm btn-submit" style="background-color:#61ccd1" onclick="window.exportjson()">导出高级过滤设置的JSON</button><button type="button" id="configbtntest" class="btn btn-sm btn-submit" style="background-color:#61ccd1" onclick="window.testapi()">测试API</button></div></div></div></div>');
+
+    var content0 ='<div id="inputurldiv" style="display:none"><div id="inputurldiv_inner"><div class="popover-header popover-title"><span style="color:#3bc0c3">AnimeGo设置</span><button type="button" class="close" onclick="closeSetting()" data-dismiss="popover-x" aria-hidden="true"><i class="fa fa-times" aria-hidden="true"></i></button></div>'
+    +'<div class="popover-body popover-content">'
+    +'<span>请修改api地址:</span><input id="inputurlbox" type="text" class="form-control input-sm" placeholder="'+samplepath+'" ><br>'
+    +'<span>AccessKey:</span><input id="inputurlbox2" type="password" class="form-control input-sm"><br>'
+    +'<span>PluginName:</span><input id="inputurlbox3" type="text" value="filter/AnimeGoHelperParser.js" class="form-control input-sm"><br>'
+    +'<span>备份/导入/清除过滤配置<br>指的是浏览器端插件的</span><br><br>'
+    +'<span>上传/获取过滤配置<br>通过AnimeGO的WebAPI同步后端和浏览器插件的过滤配置</span><br><br>'
+    +'<input type="file" accept=".json" id="upload" style="visibility:hidden">'
+    +'</div>'
+    +'<div class="popover-footer"><div style="margin-right: 12px;height:75px">'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting"  onclick="window.confirmurl()">确定</button>'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting"  onclick="window.exportjson()">备份过滤配置</button>'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting"  onclick="window.importjson()">导入过滤配置</button>'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting"  onclick="window.clearjson()">清除过滤配置</button>'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting2" onclick="window.uploadjson()">上传过滤配置</button>'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting2" onclick="window.downloadjson()">获取过滤配置</button>'
+    +'<button type="button" class="btn btn-sm btn-submit btn-setting2" onclick="window.testapi()">测试WEB API</button>'
+    + '</div></div></div></div>'
+    document.body.insertAdjacentHTML('afterend', content0);
+
+    const input = document.querySelector("#upload");
+    const fr = new FileReader();
+    fr.onload = async function() {
+        const blob = new Blob([fr.result])
+        var tmpValue;
+        try {
+            tmpValue = JSON.parse(await blob.text(), reviver);
+        } catch (error) {
+            toast('JSON转换错误:'+error);
+        }
+        if(tmpValue !== null && tmpValue !== undefined && tmpValue !== 'undefined' && tmpValue !== ''){
+            myFiliters = tmpValue;
+            await GM_setValue('myFiliters',JSON.stringify(myFiliters,replacer));
+            toast('JSON导入成功');
+        }
+    }
+    input.addEventListener('change',function(){
+        const files = this.files;
+        if(files.length>0){
+            console.log(files[0]);
+            fr.readAsArrayBuffer(files[0])
+        }
+    },false);
+
     //过滤器设定
     var content = 'AnimeName:<input type="text" id="AnimeName"  disabled ><br>BangumiId:<input type="text" id="BangumiId"  disabled ><br>SubgroupId:<input type="text" id="SubgroupId"  disabled ><br>GroupName:<input type="text" id="GroupName"  disabled ><br><br>';
     content += '请选择一个黑白名单的匹配key<br>后端会根据这个key对应的黑白名单，来决定对应的动画是否下载<br>黑白名单同时开启的情况下先适配白名单再黑名单<br>白名单定义:必须包含其中任意一个词<br>黑名单定义:不能包含其中任意一个词<br><br><select id="myselect"><option value="0">0.全局关键词过滤</option><option value="1" selected="selected">1.BangumiId+SubGroupId</option><option value="2" >2.BangumiId</option><option value="3">3.SubGroupId</option><option value="4">4.SubGroupName</option></select>&nbsp;&nbsp;&nbsp;KEY:<input type="text" id="selectkey" ><br><br>';
@@ -317,22 +370,23 @@ margin-left:5px;
     content += '<input name="input-custom-dropdown-balcklist" type="text" placeholder="输入黑名单过滤关键词后按回车" >';
     document.body.insertAdjacentHTML('afterend', '<div id="filterdiv" style="display:none"><div id="filterdiv_inner"><div class="popover-header popover-title"><span id="filtertitle" style="color:#3bc0c3">高级过滤设置</span><button type="button" class="close" onclick="closeSettingSubGroup()" data-dismiss="popover-x" aria-hidden="true"><i class="fa fa-times" aria-hidden="true"></i></button></div><div class="popover-body popover-content">'+content+'</div><div class="popover-footer"><div style="margin-right: 12px;height:30px"><button type="button" id="inputurlspan" class="btn btn-sm btn-submit" style="background-color:#61ccd1" onclick="window.confirmfilter()">确定</button></div></div></div></div>');
 
-    var switchWhitelist = document.getElementById('switchWhitelist');
-    var switchBlacklist = document.getElementById('switchBlacklist');
-    var selectkey = document.getElementById("selectkey");
-    var myselect = document.getElementById("myselect");
+    const switchWhitelist = document.getElementById('switchWhitelist');
+    const switchBlacklist = document.getElementById('switchBlacklist');
+    const selectkey = document.getElementById("selectkey");
+    const myselect = document.getElementById("myselect");
 
-    var textAnimeName = document.getElementById("AnimeName");
-    var textBangumiId = document.getElementById("BangumiId");
-    var textSubgroupId = document.getElementById("SubgroupId");
-    var textGroupName = document.getElementById("GroupName");
+    const textAnimeName = document.getElementById("AnimeName");
+    const textBangumiId = document.getElementById("BangumiId");
+    const textSubgroupId = document.getElementById("SubgroupId");
+    const textGroupName = document.getElementById("GroupName");
 
-    var inputurldiv = document.getElementById("inputurldiv");
-    var inputurlbox = document.getElementById("inputurlbox");
-    var inputurlbox2 = document.getElementById("inputurlbox2");
-    var inputurlspan = document.getElementById("inputurlspan");
+    const inputurldiv = document.getElementById("inputurldiv");
+    const inputurlbox = document.getElementById("inputurlbox");
+    const inputurlbox2 = document.getElementById("inputurlbox2");
+    const inputurlbox3 = document.getElementById("inputurlbox3");
+    const inputurlspan = document.getElementById("inputurlspan");
 
-    var filterdiv = document.getElementById("filterdiv");
+    const filterdiv = document.getElementById("filterdiv");
 
     //读取存储的地址
     var tmppath = GM_getValue('apipath');
@@ -361,6 +415,19 @@ margin-left:5px;
     if(GM_getValue('debug') == true){
         //inputurldiv.style.display = 'block';
     }
+    unsafeWindow.clearjson = async function(){
+        myFiliters.Filiter0 = new Map();
+        myFiliters.Filiter1 = new Map();
+        myFiliters.Filiter2 = new Map();
+        myFiliters.Filiter3 = new Map();
+        myFiliters.Filiter4 = new Map();
+        await GM_deleteValue('myFiliters');
+        InitListFiliters();
+        toast('过滤设置已经重置');
+    }
+    unsafeWindow.importjson = function(){
+        input.click();
+    }
     unsafeWindow.exportjson = function(){
         var json = JSON.stringify(myFiliters,replacer);
         let blob = new Blob([json],{type: 'text;charset=utf-8;'});
@@ -371,18 +438,122 @@ margin-left:5px;
         document.body.appendChild(url);
         url.click();
     }
-    unsafeWindow.testapi = function(){
-        var link = inputurlbox.value;
+    function urlcheck(link){
+        var isOk = true;
         if(!link.includes("http://") && !link.includes("https://")){
             toast(link+',需要包含http://或者https://');
-            return;
+            isOk = false;
         }
-       if(!link.includes("/api")){
+        if(!link.includes("/api")){
             toast(link+',需要包含/api');
-            return;
+            isOk = false;
+        }
+        return isOk;
+    }
+    unsafeWindow.uploadjson = function(){
+        const link = inputurlbox.value;
+        const name = inputurlbox3.value;
+        if(!urlcheck(link)){
+            return
+        }
+        var json = JSON.stringify(myFiliters,replacer);
+        var _data = JSON.stringify({"name":name,"data": Base64.encode(json)} );
+        GM_xmlhttpRequest({
+            method: 'POST',
+            url: apipath+"/plugin/config",
+            data: _data,
+            headers:{
+                'Access-Key': tokensha256,
+                'Content-Type': 'application/json'
+            },
+            onerror: response =>{
+                console.log('onerror');
+                toast('[api地址不正确] error')
+            },
+            ontimeout: response =>{
+                toast('[http]请求超时')
+            },
+            onloadend: response =>{
+            },
+            onload: response => {
+                if (response.status == 200) {
+                    var resp = JSON.parse(response.responseText);
+                    if(resp === null || resp === undefined || resp ==='undefined'){
+                        toast(name+ ',[resp is null or undefined]');
+                    }else{
+                        var code = resp.code;
+                        if(code === 200 || code === '200'){
+                            toast(resp.msg);
+                        }else{
+                            toast(name+',[json code error] code:'+resp.code+',msg:'+resp.msg);
+                        }
+                    }
+                }else{
+                    toast(name+', [http request error] '+response.status)
+                }
+            }
+        });
+    }
+    unsafeWindow.downloadjson =  function(){
+        const link = inputurlbox.value;
+        const name = inputurlbox3.value;
+        if(!urlcheck(link)){
+            return
+        }
+        if(name==''){
+            toast('PluginName不能为空')
+            return
+        }
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: apipath+"/plugin/config?name="+name,
+            headers:{
+                'Access-Key': tokensha256,
+            },
+            onerror: response =>{
+                console.log('onerror');
+                toast('[api地址不正确] error')
+            },
+            ontimeout: response =>{
+                toast('[http]请求超时')
+            },
+            onloadend: response =>{
+            },
+            onload: response => {
+                if (response.status == 200) {
+                    var resp = JSON.parse(response.responseText);
+                    if(resp === null || resp === undefined || resp ==='undefined'){
+                        toast(name+ ',[resp is null or undefined]');
+                    }else{
+                        var code = resp.code;
+                        if(code === 200 || code === '200'){
+                            var tmpValue;
+                            try {
+                                const jsonstr = Base64.decode(resp.data.data);
+                                tmpValue = JSON.parse(jsonstr, reviver);
+                                myFiliters = tmpValue;
+                                toast(resp.msg);
+                                GM_setValue('myFiliters',JSON.stringify(myFiliters,replacer));
+                            } catch (error) {
+                                toast('JSON转换错误:'+error);
+                            }
+                        }else{
+                            toast(name+',[json code error] code:'+resp.code+',msg:'+resp.msg);
+                        }
+                    }
+                }else{
+                    toast(name+', [http request error] '+response.status)
+                }
+            }
+        });
+    }
+    unsafeWindow.testapi = function(){
+        var link = inputurlbox.value;
+        if(!urlcheck(link)){
+            return
         }
         link = link.replace("/api","/ping");
-           GM_xmlhttpRequest({
+        GM_xmlhttpRequest({
             method: 'GET',
             url: link,
             headers:{'Accept': 'application/rss+xml'},
@@ -399,7 +570,7 @@ margin-left:5px;
                 //console.log(response.status);
                 if (response.status == 200) {
                     var resp = response.responseText;
-                     toast('测试成功: '+resp)
+                    toast('测试成功: '+resp)
                 }else{
                     toast('[http response error] '+response.status)
                 }
@@ -609,7 +780,7 @@ margin-left:5px;
             if(n.classList.contains('running')){
             }
             else {
-                var _data = JSON.stringify({"access_key":tokensha256,"source":"mikan","rss": { "url" : rssurl },"select_ep":is_select_ep,"is_select_ep":is_select_ep,"ep_links": [ep_link ]} );
+                var _data = JSON.stringify({"source":"mikan","rss": { "url" : rssurl },"is_select_ep":is_select_ep,"ep_links": [ep_link ]} );
                 console.log(_data);
                 n.classList.add('running');
                 if(!is_already_loading){
@@ -618,9 +789,12 @@ margin-left:5px;
                 }
                 GM_xmlhttpRequest({
                     method: 'POST',
-                    url: apipath,
+                    url: apipath+"/rss",
                     data: _data,
-                    headers:{'Content-Type': 'application/json'},
+                    headers:{
+                        'Access-Key': tokensha256,
+                        'Content-Type': 'application/json'
+                    },
                     onerror: response =>{
                         console.log('onerror');
                         toast('[api地址不正确] error')
@@ -777,7 +951,7 @@ margin-left:5px;
                 if(el.previousElementSibling !== null){
                     groupname=el.previousElementSibling.innerHTML;
                     if(groupname=='&nbsp;'){
-                         groupname=el.previousElementSibling.previousElementSibling.children[0].children[0].innerHTML;
+                        groupname=el.previousElementSibling.previousElementSibling.children[0].children[0].innerHTML;
                     }
                 }
                 el.insertAdjacentHTML('afterend', '<div class="ladda-button sk-col tag-sub" onclick="window.showSettingSubGroup(this,\''+animename+'\',\''+groupname+'\','+subgroupid+','+bangumiId+')" style="background-color: #47c1c5;color:white;padding:0px 2px 0px 2px;margin:0px 2px 0px 2px;" data-style="zoom-in">设</div>');
