@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         AnimeGoHelper[Mikan快速订阅]
 // @namespace    https://github.com/deqxj00/AnimeGoHelper
-// @version      0.45
+// @version      0.46
 // @description  AnimeGo的WebAPI调用插件,能快速添加下载项目,配置筛选规则。！！没有适配mikan的高级订阅模式，请关闭后使用。！！
 // @author       DeQxJ00
 // @match        https://mikanani.me/*
@@ -28,7 +28,7 @@
     'use strict';
 
     const samplepath = 'http://youraddress.local/api';
-    const taglist = ["h264","mp4","mkv","h265","x264","720p","1080x720","hevc","简中","繁中","特别篇","典藏版","简繁日","简日","繁日"];
+    const taglist = ["h264","mp4","mkv","h265","x264","720p","1080x720","hevc","简体","繁体","简中","繁中","特别篇","典藏版","简繁日","简日","繁日"];
     GM_addStyle(GM_getResourceText("tagifycss"));
     //snackbar src https://www.w3schools.com/howto/howto_js_snackbar.asp
     GM_addStyle(`
@@ -320,7 +320,7 @@ background-color:#00b8ee;
     +'<div class="popover-body popover-content">'
     +'<span>请修改api地址:</span><input id="inputurlbox" type="text" class="form-control input-sm" placeholder="'+samplepath+'" ><br>'
     +'<span>AccessKey:</span><input id="inputurlbox2" type="password" class="form-control input-sm"><br>'
-    +'<span>PluginName:</span><input id="inputurlbox3" type="text" value="filter/AnimeGoHelperParser.js" class="form-control input-sm"><br>'
+    +'<span>PluginName:</span><input id="inputurlbox3" type="text" value="filter/AnimeGoHelperParser/AnimeGoHelperParser.js" class="form-control input-sm"><br>'
     +'<span>备份/导入/清除过滤配置<br>指的是浏览器端插件的</span><br><br>'
     +'<span>上传/获取过滤配置<br>通过AnimeGO的WebAPI同步后端和浏览器插件的过滤配置</span><br><br>'
     +'<input type="file" accept=".json" id="upload" style="visibility:hidden">'
